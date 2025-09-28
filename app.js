@@ -1,77 +1,67 @@
-import express from "express"; // Importing express for the web framework
-import bodyParser from "body-parser"; // Importing bodyParser for parsing request bodies
-import ejsLayouts from "express-ejs-layouts"; // Importing express-ejs-layouts for layout support
-import path from "path"; // Importing express-ejs-layouts for layout support
-import dotenv from "dotenv"; // Importing dotenv to load environment variables
-import session from "express-session"; // Importing express-session for session management
-import passport from "passport"; // Importing passport for authentication
-import { Strategy as GoogleStrategy } from "passport-google-oauth20"; // Importing Google OAuth 2.0 strategy for passport
+import express from "express";
+import mongoose from "mongoose";
+import session from "express-session";
+import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
+import expressLayouts from "express-ejs-layouts";        // ✅ thêm
 
-import { connectUsingMongoose } from "./config/mongodb.js"; // Importing MongoDB connection function
-import router from "./routes/routes.js"; // Importing main application routes
-import authrouter from "./routes/authRoutes.js"; // Importing authentication routes
+import { UserGetController, UserPostController } from "./controllers/controller.js";
 
-dotenv.config(); // Loading environment variables from .env file
-const app = express(); // Initializing express application
+dotenv.config();
+const app = express();
 
-//SESSION
-app.use(
-  session({
-    secret: "SecretKey",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
-  })
-);
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(session({
+  secret: "mySecretKey",
+  resave: false,
+  saveUninitialized: false
+}));
 
-//MIDDLEWARE
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-//Passport
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
-      callbackURL:
-        "https://nodejs-authentication-system-l2pu.onrender.com/auth/google/callback",
-      scope: ["profile", "email"],
-    },
-    function (accessToken, refreshToken, profile, callback) {
-      callback(null, profile);
-    }
-  )
-);
-
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-
-passport.deserializeUser((user, done) => {
-  done(null, user);
-});
-
-// Set Templates
-app.set("view engine", "ejs"); // Define template engine
-app.use(ejsLayouts); // Use base template
-app.set("views", path.join(path.resolve(), "views")); // Define template directory
-
-// DB Connection
-connectUsingMongoose();
-
-//ROUTES
-app.get("/", (req, res) => {
-  res.send("Hey Ninja ! Go to /user/signin for the login page.");
-});
-app.use("/user", router);
-app.use("/auth", authrouter);
+// Thư mục chứa file tĩnh (ảnh nền cn.png)
 app.use(express.static("public"));
 
-//LISTEN
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on port ${process.env.PORT}`);
+// ✅ Cấu hình layout EJS
+app.use(expressLayouts);
+app.set("view engine", "ejs");
+app.set("layout", "layout");          // dùng layout.ejs làm layout mặc định
+// Nếu layout.ejs nằm trong thư mục views (mặc định), không cần set thêm views dir
+
+// Middleware global inject StudentID & Fullname
+app.use((req, res, next) => {
+  res.locals.studentId = "22700971";
+  res.locals.fullname = "Hứa Minh Khương";
+  next();
 });
+
+// Kết nối MongoDB
+mongoose.connect("mongodb://127.0.0.1:27017/cookieApp")
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error(err));
+
+// Controllers
+const getController = new UserGetController();
+const postController = new UserPostController();
+
+// Routes
+app.get("/user/signup", getController.getSignUpPage);
+app.get("/user/signin", getController.getSignInPage);
+app.get("/user/homepage", getController.homePage);
+app.get("/user/forgot-password", getController.getForgotPassword);
+app.get("/user/change-password", getController.getChangePassword);
+app.get("/user/logout", getController.logoutUser);
+
+app.post("/user/signup", postController.createUser);
+app.post("/user/signin", postController.signInUser);
+app.post("/user/forgot-password", postController.forgotPassword);
+app.post("/user/change-password", postController.changePassword);
+
+// Default route
+app.get("/", (req, res) => {
+  res.redirect("/user/signin"); // tự động chuyển đến trang Sign In
+});
+
+// Start server
+app.listen(3000, () => console.log("🚀 Server running on http://localhost:3000"));

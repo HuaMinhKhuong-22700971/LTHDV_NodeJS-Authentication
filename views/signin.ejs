@@ -1,33 +1,30 @@
 <section>
   <h2>Sign In</h2>
-  <% if (message) { %>
-  <p><%= message %></p>
-  <% } %>
-  <form action="/user/signin" method="post">
-    <input type="email" name="email" placeholder="Email" required /><br /><br />
-    <input
-      type="password"
-      name="password"
-      placeholder="Password"
-      required
-    /><br /><br />
-    <div
-      class="g-recaptcha"
-      data-sitekey="6LflLRIqAAAAAHrbmeUx3WThRxp7On8iAQQOIQWH"
-    ></div>
-    <button
-      type="submit"
-      class="btn btn-light"
-    >
-      Sign In
-    </button>
-  </form>
-  <br />
-  <!-- Sign-in Google Auth -->
-  <a href="/auth/google"><strong>Sign In with Google</strong></a> &nbsp&nbsp
 
-  <!-- Link to forgot password page -->
-  <a href="/user/forgot-password"><strong>Forgot Password?</strong></a><br>
-  
-  <p><strong>Don't have an account?</strong> &nbsp; <a href="/user/signup"><strong>Sign up</strong></a></p>
+  <p>StudentID: <%= studentId %> - Fullname: <%= fullname %></p>
+
+  <% if (message) { %>
+    <p class="error"><%= message %></p>
+  <% } %>
+
+  <form action="/user/signin" method="post">
+    <input type="email" name="email" placeholder="Email" required />
+    <input type="password" name="password" placeholder="Password" required />
+
+    <div class="g-recaptcha" data-sitekey="6LflLRIqAAAAAHrbmeUx3WThRxp7On8iAQQOIQWH"></div>
+
+    <button type="submit">Sign In</button>
+  </form>
+
+  <hr />
+
+  <a href="/auth/google" class="btn btn-danger btn-block mb-3">
+    Sign In with Google
+  </a>
+
+  <a href="/user/forgot-password"><strong>Forgot Password?</strong></a>
+  <p>
+    <strong>Don't have an account?</strong>
+    <a href="/user/signup"><strong>Sign up</strong></a>
+  </p>
 </section>
